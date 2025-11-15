@@ -1,12 +1,6 @@
 // Your Firebase configuration object (replace with your own credentials)
 const firebaseConfig = {
- apiKey: "AIzaSyA3cCcxUA10Vvbdn5IpBrumruc9-CW_NGk",
-      authDomain: "smartwaste-9b8d9.firebaseapp.com",
-      databaseURL: "https://smartwaste-9b8d9-default-rtdb.asia-southeast1.firebasedatabase.app",
-      projectId: "smartwaste-9b8d9",
-      storageBucket: "smartwaste-9b8d9.firebasestorage.app",
-      messagingSenderId: "416800460395",
-      appId: "1:416800460395:web:8b3e618289982203d16b2e"
+ 
 };
 
 // Initialize Firebase
@@ -54,3 +48,4 @@ const updateUI = (elementId, progressBarId, level) => {
 // Initialize real-time data listeners for both bins
 listenForBinChanges('bin1', 'bin1-level', 'bin1-progress');
 listenForBinChanges('bin2', 'bin2-level', 'bin2-progress');
+
