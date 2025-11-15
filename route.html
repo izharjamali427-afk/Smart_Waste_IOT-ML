@@ -1,0 +1,770 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Route Optimization Dashboard</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: #1e5631;
+            --secondary-color: #2d8a4e;
+            --accent-color: #50c878;
+            --text-light: #ffffff;
+            --text-dark: #333333;
+            --bg-light: #f8f9fa;
+            --bg-dark: #212529;
+            --shadow-sm: 0 2px 5px rgba(0, 0, 0, 0.1);
+            --shadow-md: 0 4px 8px rgba(0, 0, 0, 0.2);
+            --shadow-lg: 0 10px 20px rgba(0, 0, 0, 0.15);
+            --border-radius-sm: 6px;
+            --border-radius-md: 10px;
+            --border-radius-lg: 15px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', 'Roboto', 'Arial', sans-serif;
+        }
+
+        body {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            background: url('background.jpg') no-repeat center center/cover;
+            color: var(--text-dark);
+        }
+
+        /* Refined Navbar */
+        .navbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: linear-gradient(120deg, var(--bg-dark), #2c3e50);
+            padding: 12px 30px;
+            position: fixed;
+            width: 100%;
+            top: 0;
+            left: 0;
+            z-index: 1000;
+            box-shadow: var(--shadow-md);
+        }
+
+        .logo-section {
+            display: flex;
+            align-items: center;
+        }
+
+        .logo-section i {
+            font-size: 22px;
+            margin-right: 10px;
+            color: var(--accent-color);
+        }
+
+        .logo-text {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text-light);
+            letter-spacing: 0.5px;
+        }
+
+        .nav-buttons {
+            display: flex;
+            gap: 15px;
+        }
+
+        .nav-buttons button {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05));
+            color: var(--text-light);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 10px 16px;
+            font-size: 14px;
+            font-weight: 500;
+            border-radius: var(--border-radius-sm);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(5px);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .nav-buttons button:hover {
+            background: rgba(255, 255, 255, 0.15);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .nav-buttons button i {
+            font-size: 14px;
+        }
+
+        /* Enhanced Header */
+        .header {
+            margin-top: 72px;
+            background: linear-gradient(120deg, var(--primary-color), var(--secondary-color));
+            color: var(--text-light);
+            padding: 20px;
+            text-align: center;
+            font-size: 24px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            box-shadow: var(--shadow-md);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+        }
+
+        /* Improved Map Container */
+        .map-container {
+            position: relative;
+            flex-grow: 1;
+            padding: 20px;
+        }
+
+        #map {
+            height: 65vh;
+            border-radius: var(--border-radius-lg);
+            overflow: hidden;
+            box-shadow: var(--shadow-lg);
+            border: 1px solid rgba(0, 0, 0, 0.1);
+        }
+
+        /* Refined Info Panel */
+        .info-panel {
+            position: absolute;
+            top: 30px;
+            left: 30px;
+            width: 280px;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 20px;
+            border-radius: var(--border-radius-md);
+            box-shadow: var(--shadow-lg);
+            z-index: 1000;
+            border-left: 4px solid var(--accent-color);
+        }
+
+        .info-panel h3 {
+            margin-bottom: 15px;
+            color: var(--primary-color);
+            font-size: 18px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+            padding-bottom: 10px;
+        }
+
+        .info-panel h3 i {
+            color: var(--accent-color);
+        }
+
+        .info-panel p {
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .info-panel .value {
+            font-weight: 500;
+            color: var(--text-dark);
+            background: rgba(0, 0, 0, 0.05);
+            padding: 4px 8px;
+            border-radius: 4px;
+            min-width: 120px;
+            text-align: right;
+        }
+
+        /* Enhanced Instructions Panel */
+        .instructions {
+            position: absolute;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 90%;
+            max-width: 600px;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 15px 20px;
+            border-radius: var(--border-radius-md);
+            box-shadow: var(--shadow-lg);
+            font-size: 14px;
+            z-index: 1000;
+            max-height: 180px;
+            overflow-y: auto;
+            scrollbar-width: thin;
+            scrollbar-color: var(--secondary-color) transparent;
+            border-top: 4px solid var(--accent-color);
+            transition: all 0.3s ease;
+        }
+
+        .instructions h3 {
+            margin-bottom: 12px;
+            color: var(--primary-color);
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+            padding-bottom: 10px;
+        }
+
+        .instructions h3 i {
+            color: var(--accent-color);
+        }
+
+        .toggle-instructions {
+            cursor: pointer;
+            background: var(--accent-color);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 28px;
+            height: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+
+        .toggle-instructions:hover {
+            transform: scale(1.1);
+            background: var(--primary-color);
+        }
+
+        .instructions.hidden .instruction-content {
+            display: none;
+        }
+
+        .instructions.hidden {
+            max-height: 60px;
+            padding-bottom: 10px;
+        }
+
+        .instruction-step {
+            padding: 8px 12px;
+            margin-bottom: 8px;
+            border-radius: var(--border-radius-sm);
+            background: rgba(0, 0, 0, 0.03);
+            display: flex;
+            align-items: center;
+        }
+
+        .step-number {
+            background: var(--accent-color);
+            color: white;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            margin-right: 10px;
+            flex-shrink: 0;
+        }
+
+        .step-content {
+            flex-grow: 1;
+        }
+
+        .step-distance {
+            font-size: 12px;
+            color: #666;
+            margin-top: 4px;
+        }
+
+        /* Bin Marker Styling */
+        .bin-marker {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            border: 2px solid white;
+            position: relative;
+            cursor: pointer;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.4);
+            transition: transform 0.2s ease;
+        }
+
+        .bin-marker:hover {
+            transform: scale(1.1);
+            z-index: 1001;
+        }
+
+        .bin-percentage {
+            position: absolute;
+            top: -30px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            white-space: nowrap;
+            display: none;
+            pointer-events: none;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .bin-marker:hover .bin-percentage {
+            display: block;
+        }
+
+        /* Scrollbar Styling */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.05);
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background-color: var(--secondary-color);
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background-color: var(--primary-color);
+        }
+
+        /* Animation for loading states */
+        @keyframes pulse {
+            0% { opacity: 0.6; }
+            50% { opacity: 1; }
+            100% { opacity: 0.6; }
+        }
+
+        .loading {
+            animation: pulse 1.5s infinite;
+        }
+
+        /* Responsive Adjustments */
+        @media (max-width: 768px) {
+            .navbar {
+                padding: 10px 15px;
+            }
+
+            .logo-text {
+                font-size: 16px;
+            }
+
+            .nav-buttons button {
+                padding: 8px 12px;
+                font-size: 13px;
+            }
+
+            .header {
+                font-size: 20px;
+                padding: 15px;
+                margin-top: 62px;
+            }
+
+            .info-panel {
+                width: 220px;
+                top: 20px;
+                left: 20px;
+                padding: 15px;
+            }
+
+            .instructions {
+                bottom: 20px;
+                padding: 12px 15px;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .nav-buttons button span {
+                display: none;
+            }
+
+            .nav-buttons button i {
+                font-size: 16px;
+                margin: 0;
+            }
+
+            .info-panel {
+                width: 180px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="navbar">
+        <div class="logo-section">
+            <i class="fas fa-route"></i>
+            <div class="logo-text">Smart Waste Management</div>
+        </div>
+        <div class="nav-buttons">
+            <button onclick="location.href='moniter.html'"><i class="fas fa-home"></i> <span>Dashboard</span></button>
+            <button onclick="location.href='route.html'" style="background: rgba(80, 200, 120, 0.2);"><i class="fas fa-map-marked-alt"></i> <span>Route Optimization</span></button>
+            <button onclick="location.href='forecasting.html'"><i class="fas fa-chart-line"></i> <span>Analytics</span></button>
+            <button onclick="logout()"><i class="fas fa-sign-out-alt"></i> <span>Logout</span></button>
+        </div>
+    </div>
+
+    <div class="header">
+        <i class="fas fa-truck"></i> Route Optimization Dashboard
+    </div>
+
+    <div class="map-container">
+        <div id="map"></div>
+        
+        <div class="info-panel" id="info-panel">
+            <h3><i class="fas fa-satellite-dish"></i> Live GPS Tracking</h3>
+            <p><b>Latitude:</b> <span id="lat" class="value">N/A</span></p>
+            <p><b>Longitude:</b> <span id="lng" class="value">N/A</span></p>
+            <p><b>Speed:</b> <span class="value">24 km/h</span></p>
+            <p><b>Next Stop:</b> <span class="value">~4 min</span></p>
+        </div>
+        
+        <div class="instructions" id="instructions">
+            <h3>
+                <i class="fas fa-directions"></i> Turn-by-turn Navigation
+                <button class="toggle-instructions" id="toggle-instructions" title="Toggle instructions visibility">
+                    <i class="fas fa-chevron-down" id="toggle-icon"></i>
+                </button>
+            </h3>
+            <div class="instruction-content">
+                <div class="instruction-step">
+                    <div class="step-number">1</div>
+                    <div class="step-content">
+                        Head east on Main Street
+                        <div class="step-distance">1.2 km</div>
+                    </div>
+                </div>
+                <div class="instruction-step">
+                    <div class="step-number">2</div>
+                    <div class="step-content">
+                        Turn right onto Oak Avenue
+                        <div class="step-distance">0.8 km</div>
+                    </div>
+                </div>
+                <div class="instruction-step">
+                    <div class="step-number">3</div>
+                    <div class="step-content">
+                        Continue straight through the roundabout
+                        <div class="step-distance">0.5 km</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/@mapbox/polyline"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+
+    <script>
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyA3cCcxUA10Vvbdn5IpBrumruc9-CW_NGk",
+            authDomain: "smartwaste-9b8d9.firebaseapp.com",
+            databaseURL: "https://smartwaste-9b8d9-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "smartwaste-9b8d9",
+            storageBucket: "smartwaste-9b8d9.appspot.com",
+            messagingSenderId: "123456789",
+            appId: "1:123456789:web:abcdefgh"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+
+        let truckMarker, routeLine;
+        let currentRoutePoints = [];
+        let animationIndex = 0;
+        let isAnimating = false;
+        let binMarkers = [];
+        let binLevels = new Array(6).fill(0);
+        let instructionsVisible = true;
+
+       const binLocations = [
+    [25.3965, 68.362],  // Original starting point
+    [25.415, 68.362],   // ~2km north
+    [25.3965, 68.382],  // ~2km east
+    [25.376, 68.362],   // ~2km south
+    [25.3965, 68.342],  // ~2km west
+    [25.415, 68.382]    // ~2km northeast
+];
+        const map = L.map('map').setView([25.396, 68.361], 14);
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19
+        }).addTo(map);
+
+        // Instructions toggle functionality
+        document.getElementById('toggle-instructions').addEventListener('click', function() {
+            const instructionsPanel = document.getElementById('instructions');
+            const toggleIcon = document.getElementById('toggle-icon');
+            
+            instructionsVisible = !instructionsVisible;
+            
+            if (instructionsVisible) {
+                instructionsPanel.classList.remove('hidden');
+                toggleIcon.classList.remove('fa-chevron-up');
+                toggleIcon.classList.add('fa-chevron-down');
+            } else {
+                instructionsPanel.classList.add('hidden');
+                toggleIcon.classList.remove('fa-chevron-down');
+                toggleIcon.classList.add('fa-chevron-up');
+            }
+        });
+
+        function getBinColor(fillLevel) {
+            if (fillLevel >= 80) return '#FF0000';  // Red
+            if (fillLevel >= 50) return '#FFA500';  // Orange
+            return '#008000';  // Green
+        }
+
+        function createBinMarker(location, index) {
+            const binDiv = document.createElement('div');
+            binDiv.className = 'bin-marker';
+            binDiv.id = `bin-${index + 1}`;
+            binDiv.style.backgroundColor = getBinColor(0);
+            
+            const percentageDiv = document.createElement('div');
+            percentageDiv.className = 'bin-percentage';
+            percentageDiv.id = `bin-percentage-${index + 1}`;
+            percentageDiv.innerHTML = '0%';
+            binDiv.appendChild(percentageDiv);
+            
+            binDiv.innerHTML += `${index + 1}`;
+
+            const binIcon = L.divIcon({
+                html: binDiv,
+                className: 'bin-icon',
+                iconSize: [30, 30]
+            });
+
+            return L.marker(location, { icon: binIcon });
+        }
+
+        // Initialize bin markers
+        binLocations.forEach((loc, idx) => {
+            const marker = createBinMarker(loc, idx);
+            marker.addTo(map);
+            binMarkers.push(marker);
+        });
+
+        function updateBinLevel(binIndex, fillLevel) {
+            const binElement = document.getElementById(`bin-${binIndex + 1}`);
+            const percentageElement = document.getElementById(`bin-percentage-${binIndex + 1}`);
+            
+            if (binElement && percentageElement) {
+                binElement.style.backgroundColor = getBinColor(fillLevel);
+                percentageElement.innerHTML = `${fillLevel.toFixed(1)}%`;
+                binLevels[binIndex] = fillLevel;
+            }
+        }
+
+        // Firebase Realtime Database listeners
+        function setupBinListener(binNumber) {
+            const binRef = database.ref(`bins/bin${binNumber}/fill`);
+            binRef.on('value', (snapshot) => {
+                try {
+                    const fillLevel = snapshot.val();
+                    if (fillLevel !== null && !isNaN(fillLevel)) {
+                        console.log(`Bin ${binNumber} fill level:`, fillLevel);
+                        updateBinLevel(binNumber - 1, fillLevel);
+                    } else {
+                        console.warn(`Invalid fill level for bin ${binNumber}:`, fillLevel);
+                    }
+                } catch (error) {
+                    console.error(`Error processing bin ${binNumber} data:`, error);
+                }
+            }, (error) => {
+                console.error(`Error listening to bin ${binNumber}:`, error);
+            });
+        }
+
+        // Set up listeners for bins 1 and 2
+        setupBinListener(1);
+        setupBinListener(2);
+
+        // Simulate other bins
+        function simulateBinLevels() {
+            for (let i = 2; i < binLocations.length; i++) {
+                const randomFillLevel = Math.floor(Math.random() * 100);
+                updateBinLevel(i, randomFillLevel);
+            }
+        }
+
+        // Update simulated bins every 30 seconds
+        setInterval(simulateBinLevels, 30000);
+        simulateBinLevels(); // Initial simulation
+
+        // Firebase connection status monitoring
+        const connectedRef = database.ref('.info/connected');
+        connectedRef.on('value', (snap) => {
+            if (snap.val() === true) {
+                console.log('Connected to Firebase');
+            } else {
+                console.log('Not connected to Firebase');
+            }
+        });
+
+        function initializeTruckMarker(lat, lng) {
+            document.getElementById("lat").innerText = lat.toFixed(5);
+            document.getElementById("lng").innerText = lng.toFixed(5);
+
+            if (!truckMarker) {
+                truckMarker = L.marker([lat, lng], {
+                    icon: L.icon({
+                        iconUrl: 'truck.png',
+                        iconSize: [40, 40]
+                    })
+                }).addTo(map).bindPopup('Truck Live Location');
+            } else {
+                truckMarker.setLatLng([lat, lng]);
+            }
+        }
+
+        function updateRoute(lat, lng) {
+    // Sort bins by priority: Red (≥80%) first, then Orange (50-79%), then Green (<50%)
+    const binPriorities = binLocations.map((location, index) => ({
+        location: location,
+        index: index,
+        fillLevel: binLevels[index],
+        priority: binLevels[index] >= 80 ? 1 : (binLevels[index] >= 50 ? 2 : 3)
+    }));
+
+    // Sort by priority (1 = highest priority)
+    binPriorities.sort((a, b) => a.priority - b.priority);
+    
+    // Create API URL with prioritized bin order
+    const apiUrl = `http://localhost:8080/route?` +
+        `point=${lat},${lng}&` +
+        binPriorities.map(bin => `point=${bin.location[0]},${bin.location[1]}`).join('&') +
+        `&profile=car&format=json`;
+
+    console.log('Prioritized route order:', binPriorities.map(b => `Bin ${b.index + 1} (${b.fillLevel.toFixed(1)}%)`));
+
+    fetch(apiUrl)
+        .then(response => {
+            if (!response.ok) throw new Error('Failed to fetch route');
+            return response.json();
+        })
+        .then(data => {
+            if (routeLine) map.removeLayer(routeLine);
+
+            const points = polyline.decode(data.paths[0].points);
+            
+            // Color-code the route line based on priority
+            routeLine = L.polyline(points, { 
+                color: 'blue', 
+                weight: 4,
+                opacity: 0.8 
+            }).addTo(map);
+            map.fitBounds(routeLine.getBounds());
+
+            currentRoutePoints = points;
+            animationIndex = 0;
+            animateTruck();
+
+            // Update instructions with new route data and priority info
+            const instructionsContent = document.querySelector('.instruction-content');
+            instructionsContent.innerHTML = '';
+            
+            // Add priority header
+            const priorityHeader = document.createElement('div');
+            priorityHeader.innerHTML = `
+                <div style="background: rgba(255,0,0,0.1); padding: 8px; border-radius: 4px; margin-bottom: 10px; font-size: 12px;">
+                    <strong>Route Priority:</strong> Red bins (≥80%) → Orange bins (50-79%) → Green bins (<50%)
+                </div>
+            `;
+            instructionsContent.appendChild(priorityHeader);
+            
+            data.paths[0].instructions.forEach((inst, index) => {
+                const step = document.createElement('div');
+                step.className = 'instruction-step';
+                step.innerHTML = `
+                    <div class="step-number">${index + 1}</div>
+                    <div class="step-content">
+                        ${inst.text}
+                        <div class="step-distance">${(inst.distance / 1000).toFixed(2)} km</div>
+                    </div>
+                `;
+                instructionsContent.appendChild(step);
+            });
+        })
+        .catch(error => console.error("Route fetching error:", error));
+}
+
+// Add this function to trigger route recalculation when bin levels change
+function updateBinLevel(binIndex, fillLevel) {
+    const binElement = document.getElementById(`bin-${binIndex + 1}`);
+    const percentageElement = document.getElementById(`bin-percentage-${binIndex + 1}`);
+    
+    if (binElement && percentageElement) {
+        const oldFillLevel = binLevels[binIndex];
+        binElement.style.backgroundColor = getBinColor(fillLevel);
+        percentageElement.innerHTML = `${fillLevel.toFixed(1)}%`;
+        binLevels[binIndex] = fillLevel;
+        
+        // Check if priority changed (crossing 50% or 80% thresholds)
+        const oldPriority = oldFillLevel >= 80 ? 1 : (oldFillLevel >= 50 ? 2 : 3);
+        const newPriority = fillLevel >= 80 ? 1 : (fillLevel >= 50 ? 2 : 3);
+        
+        if (oldPriority !== newPriority && truckMarker) {
+            console.log(`Bin ${binIndex + 1} priority changed from ${oldPriority} to ${newPriority}. Recalculating route...`);
+            const truckPos = truckMarker.getLatLng();
+            updateRoute(truckPos.lat, truckPos.lng);
+        }
+    }
+}
+
+        function animateTruck() {
+            if (isAnimating || currentRoutePoints.length === 0) return;
+            isAnimating = true;
+
+            function moveStep() {
+                if (animationIndex < currentRoutePoints.length) {
+                    const [lat, lng] = currentRoutePoints[animationIndex];
+                    truckMarker.setLatLng([lat, lng]);
+                    animationIndex++;
+                    setTimeout(moveStep, 100);
+                } else {
+                    isAnimating = false;
+                }
+            }
+            moveStep();
+        }
+
+        if ("geolocation" in navigator) {
+            navigator.geolocation.watchPosition(position => {
+                const lat = position.coords.latitude;
+                const lng = position.coords.longitude;
+                initializeTruckMarker(lat, lng);
+                updateRoute(lat, lng);
+            }, error => {
+                console.error("Error fetching GPS:", error);
+            }, {
+                enableHighAccuracy: true,
+                maximumAge: 0,
+                timeout: 5000
+            });
+        } else {
+            console.error("Geolocation is not supported by this browser.");
+        }
+        
+        // Logout function for the Logout button
+        function logout() {
+            location.href = "index.html";
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,1066 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Waste Collection Dashboard</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.7.0/chart.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
+    <style>
+        :root {
+            --primary-color: #1e5631;
+            --secondary-color: #2d8a4e;
+            --accent-color: #50c878;
+            --text-light: #ffffff;
+            --text-dark: #333333;
+            --bg-light: #f8f9fa;
+            --bg-dark: #212529;
+            --shadow-sm: 0 2px 5px rgba(0, 0, 0, 0.1);
+            --shadow-md: 0 4px 8px rgba(0, 0, 0, 0.2);
+            --shadow-lg: 0 10px 20px rgba(0, 0, 0, 0.15);
+            --border-radius-sm: 6px;
+            --border-radius-md: 10px;
+            --border-radius-lg: 15px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', 'Roboto', 'Arial', sans-serif;
+        }
+
+        body {
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            background: url('background.jpg') no-repeat center center/cover;
+            color: var(--text-dark);
+        }
+
+        /* Navbar */
+        .navbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: linear-gradient(120deg, var(--bg-dark), #2c3e50);
+            padding: 12px 30px;
+            position: fixed;
+            width: 100%;
+            top: 0;
+            left: 0;
+            z-index: 1000;
+            box-shadow: var(--shadow-md);
+        }
+
+        .logo-section {
+            display: flex;
+            align-items: center;
+        }
+
+        .logo-section i {
+            font-size: 22px;
+            margin-right: 10px;
+            color: var(--accent-color);
+        }
+
+        .logo-text {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text-light);
+            letter-spacing: 0.5px;
+        }
+
+        .nav-buttons {
+            display: flex;
+            gap: 15px;
+        }
+
+        .nav-buttons button {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05));
+            color: var(--text-light);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 10px 16px;
+            font-size: 14px;
+            font-weight: 500;
+            border-radius: var(--border-radius-sm);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(5px);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .nav-buttons button:hover {
+            background: rgba(255, 255, 255, 0.15);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .nav-buttons button i {
+            font-size: 14px;
+        }
+
+        /* Enhanced Header */
+        .header {
+            margin-top: 72px;
+            background: linear-gradient(120deg, var(--primary-color), var(--secondary-color));
+            color: var(--text-light);
+            padding: 20px;
+            text-align: center;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            box-shadow: var(--shadow-md);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+            border-radius: var(--border-radius-sm);
+            margin-bottom: 20px;
+        }
+
+        .header h1 {
+            font-size: 24px;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        #datasetInfo {
+            font-size: 14px;
+            margin-top: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 10px 15px;
+            border-radius: var(--border-radius-sm);
+            max-width: 600px;
+        }
+
+        /* Dashboard Container */
+        .dashboard-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px 20px;
+            width: 100%;
+        }
+
+        /* Grid Layout */
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        /* Card Styling */
+        .card, .chart-container {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 20px;
+            border-radius: var(--border-radius-md);
+            box-shadow: var(--shadow-lg);
+            border-left: 4px solid var(--accent-color);
+        }
+
+        .card h2, .chart-container h2 {
+            margin-bottom: 15px;
+            color: var(--primary-color);
+            font-size: 18px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+            padding-bottom: 10px;
+        }
+
+        .card h2 i, .chart-container h2 i {
+            color: var(--accent-color);
+        }
+
+        /* Form Elements */
+        form {
+            margin-top: 15px;
+        }
+
+        input[type="file"] {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            border-radius: var(--border-radius-sm);
+            background: rgba(0, 0, 0, 0.02);
+        }
+
+        button {
+            background: linear-gradient(135deg, var(--secondary-color), var(--accent-color));
+            color: var(--text-light);
+            border: none;
+            padding: 10px 16px;
+            font-size: 14px;
+            font-weight: 500;
+            border-radius: var(--border-radius-sm);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+
+        /* Table Styling */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            border-radius: var(--border-radius-sm);
+            overflow: hidden;
+        }
+
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+        }
+
+        th {
+            background: linear-gradient(120deg, var(--primary-color), var(--secondary-color));
+            color: var(--text-light);
+            font-weight: 500;
+        }
+
+        tr:nth-child(even) {
+            background-color: rgba(0, 0, 0, 0.02);
+        }
+
+        tr:hover {
+            background-color: rgba(0, 0, 0, 0.04);
+        }
+
+        .collection-needed {
+            background-color: rgba(255, 80, 80, 0.1);
+        }
+
+        /* Status Messages */
+        #uploadStatus {
+            margin-top: 10px;
+            font-size: 14px;
+            padding: 8px;
+            border-radius: var(--border-radius-sm);
+            text-align: center;
+        }
+
+        /* Chart Container */
+        canvas {
+            margin-top: 10px;
+            max-height: 300px;
+            width: 100%;
+        }
+
+        /* Scrollbar Styling */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.05);
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background-color: var(--secondary-color);
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background-color: var(--primary-color);
+        }
+
+        /* Animation for loading states */
+        @keyframes pulse {
+            0% { opacity: 0.6; }
+            50% { opacity: 1; }
+            100% { opacity: 0.6; }
+        }
+
+        .loading {
+            animation: pulse 1.5s infinite;
+        }
+
+        /* Responsive Adjustments */
+        @media (max-width: 768px) {
+            .navbar {
+                padding: 10px 15px;
+            }
+
+            .logo-text {
+                font-size: 16px;
+            }
+
+            .nav-buttons button {
+                padding: 8px 12px;
+                font-size: 13px;
+            }
+
+            .header {
+                font-size: 20px;
+                padding: 15px;
+                margin-top: 62px;
+            }
+
+            .grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .nav-buttons button span {
+                display: none;
+            }
+
+            .nav-buttons button i {
+                font-size: 16px;
+                margin: 0;
+            }
+
+            .dashboard-container {
+                padding: 0 10px 10px;
+            }
+        }
+    </style>
+</head>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Waste Management - Analytics</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.4/moment.min.js"></script>
+    <style>
+        :root {
+    --primary-color: #1e5631;
+    --secondary-color: #2d8a4e;
+    --accent-color: #50c878;
+    --text-light: #ffffff;
+    --text-dark: #333333;
+    --bg-light: #f8f9fa;
+    --bg-dark: #212529;
+    --shadow-sm: 0 2px 5px rgba(0, 0, 0, 0.1);
+    --shadow-md: 0 4px 8px rgba(0, 0, 0, 0.2);
+    --shadow-lg: 0 10px 20px rgba(0, 0, 0, 0.15);
+    --border-radius-sm: 6px;
+    --border-radius-md: 10px;
+    --border-radius-lg: 15px;
+    --success-color: #4caf50;
+    --error-color: #f44336;
+    --warning-color: #ffa500;
+    --info-color: #2196f3;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Segoe UI', 'Roboto', 'Arial', sans-serif;
+}
+
+body {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    background: url('background.jpg') no-repeat center center/cover;
+    color: var(--text-dark);
+}
+
+/* Navbar */
+.navbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: linear-gradient(120deg, var(--bg-dark), #2c3e50);
+    padding: 12px 30px;
+    position: fixed;
+    width: 100%;
+    top: 0;
+    left: 0;
+    z-index: 1000;
+    box-shadow: var(--shadow-md);
+}
+
+.logo-section {
+    display: flex;
+    align-items: center;
+}
+
+.logo-section i {
+    font-size: 22px;
+    margin-right: 10px;
+    color: var(--accent-color);
+}
+
+.logo-text {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--text-light);
+    letter-spacing: 0.5px;
+}
+
+.nav-buttons {
+    display: flex;
+    gap: 15px;
+}
+
+.nav-buttons button {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05));
+    color: var(--text-light);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 10px 16px;
+    font-size: 14px;
+    font-weight: 500;
+    border-radius: var(--border-radius-sm);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(5px);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.nav-buttons button:hover {
+    background: rgba(255, 255, 255, 0.15);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+.nav-buttons button i {
+    font-size: 14px;
+}
+
+/* Header */
+.header {
+    margin-top: 72px;
+    background: linear-gradient(120deg, var(--primary-color), var(--secondary-color));
+    color: var(--text-light);
+    padding: 20px;
+    text-align: center;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    box-shadow: var(--shadow-md);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+    border-radius: var(--border-radius-sm);
+    margin-bottom: 20px;
+}
+
+.header h1 {
+    font-size: 24px;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+#datasetInfo {
+    font-size: 14px;
+    margin-top: 10px;
+    background: rgba(255, 255, 255, 0.1);
+    padding: 10px 15px;
+    border-radius: var(--border-radius-sm);
+    max-width: 600px;
+}
+
+/* Dashboard Container */
+.dashboard-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 20px 20px;
+    width: 100%;
+}
+
+/* Grid Layout */
+.grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 20px;
+    margin-bottom: 20px;
+}
+
+/* Card Styling */
+.card, .chart-container {
+    background: rgba(255, 255, 255, 0.95);
+    padding: 20px;
+    border-radius: var(--border-radius-md);
+    box-shadow: var(--shadow-lg);
+    border-left: 4px solid var(--accent-color);
+}
+
+.card h2, .chart-container h2 {
+    margin-bottom: 15px;
+    color: var(--primary-color);
+    font-size: 18px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+    padding-bottom: 10px;
+}
+
+.card h2 i, .chart-container h2 i {
+    color: var(--accent-color);
+}
+
+/* Form Elements */
+form {
+    margin-top: 15px;
+}
+
+input[type="file"] {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 10px;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    border-radius: var(--border-radius-sm);
+    background: rgba(0, 0, 0, 0.02);
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+input[type="file"]:hover {
+    border-color: var(--accent-color);
+    background: rgba(80, 200, 120, 0.05);
+}
+
+button, button[type="submit"] {
+    background: linear-gradient(135deg, var(--secondary-color), var(--accent-color));
+    color: var(--text-light);
+    border: none;
+    padding: 10px 16px;
+    font-size: 14px;
+    font-weight: 500;
+    border-radius: var(--border-radius-sm);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    width: 100%;
+    margin-top: 10px;
+}
+
+button:hover, button[type="submit"]:hover {
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+button:disabled, button[type="submit"]:disabled {
+    background: #ccc;
+    cursor: not-allowed;
+    transform: none;
+    opacity: 0.7;
+}
+
+/* Table Styling */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+    border-radius: var(--border-radius-sm);
+    overflow: hidden;
+}
+
+th, td {
+    padding: 12px 15px;
+    text-align: left;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+th {
+    background: linear-gradient(120deg, var(--primary-color), var(--secondary-color));
+    color: var(--text-light);
+    font-weight: 500;
+}
+
+tr:nth-child(even) {
+    background-color: rgba(0, 0, 0, 0.02);
+}
+
+tr:hover {
+    background-color: rgba(0, 0, 0, 0.04);
+}
+
+.collection-needed {
+    background-color: rgba(244, 67, 54, 0.1);
+}
+
+/* Status Messages */
+#uploadStatus {
+    margin-top: 10px;
+    font-size: 14px;
+    padding: 8px;
+    border-radius: var(--border-radius-sm);
+    text-align: center;
+}
+
+.status-success {
+    background: rgba(76, 175, 80, 0.1);
+    color: var(--success-color);
+    border: 1px solid var(--success-color);
+}
+
+.status-error {
+    background: rgba(244, 67, 54, 0.1);
+    color: var(--error-color);
+    border: 1px solid var(--error-color);
+}
+
+.status-loading {
+    background: rgba(33, 150, 243, 0.1);
+    color: var(--info-color);
+    border: 1px solid var(--info-color);
+}
+
+/* Chart Container */
+canvas {
+    margin-top: 10px;
+    max-height: 300px;
+    width: 100%;
+}
+
+#predictionsChart {
+    height: 400px;
+    margin-bottom: 2rem;
+}
+
+/* Spinner */
+.spinner {
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    border: 2px solid #f3f3f3;
+    border-top: 2px solid var(--info-color);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-right: 0.5rem;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Animation for loading states */
+@keyframes pulse {
+    0% { opacity: 0.6; }
+    50% { opacity: 1; }
+    100% { opacity: 0.6; }
+}
+
+.loading {
+    animation: pulse 1.5s infinite;
+}
+
+/* Scrollbar Styling */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.05);
+    border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+    background-color: var(--secondary-color);
+    border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background-color: var(--primary-color);
+}
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+    .navbar {
+        padding: 10px 15px;
+    }
+
+    .logo-text {
+        font-size: 16px;
+    }
+
+    .nav-buttons button {
+        padding: 8px 12px;
+        font-size: 13px;
+    }
+
+    .header {
+        font-size: 20px;
+        padding: 15px;
+        margin-top: 62px;
+    }
+
+    .header h1 {
+        font-size: 20px;
+    }
+
+    .grid {
+        grid-template-columns: 1fr;
+    }
+
+    .dashboard-container {
+        padding: 0 10px 10px;
+    }
+}
+
+@media (max-width: 576px) {
+    .nav-buttons button span {
+        display: none;
+    }
+
+    .nav-buttons button i {
+        font-size: 16px;
+        margin: 0;
+    }
+
+    .dashboard-container {
+        padding: 0 10px 10px;
+    }
+
+    .header h1 {
+        font-size: 18px;
+        flex-direction: column;
+        gap: 5px;
+    }
+
+    .card, .chart-container {
+        padding: 15px;
+    }
+
+    #predictionsChart {
+        height: 300px;
+    }
+}
+    </style>
+</head>
+<body>
+    <div class="navbar">
+        <div class="logo-section">
+            <i class="fas fa-recycle"></i>
+            <div class="logo-text">Smart Waste Management</div>
+        </div>
+        <div class="nav-buttons">
+            <button onclick="location.href='moniter.html'"><i class="fas fa-home"></i> <span>Dashboard</span></button>
+            <button onclick="location.href='route.html'"><i class="fas fa-map-marked-alt"></i> <span>Route Optimization</span></button>
+            <button onclick="location.href='forecasting.html'" style="background: rgba(80, 200, 120, 0.2);"><i class="fas fa-chart-line"></i> <span>Analytics</span></button>
+            <button onclick="logout()"><i class="fas fa-sign-out-alt"></i> <span>Logout</span></button>
+        </div>
+    </div>
+
+    <div class="dashboard-container">
+        <div class="header">
+            <h1><i class="fas fa-chart-line"></i> Waste Collection Forecasting</h1>
+            <div id="datasetInfo"></div>
+        </div>
+
+        <div class="grid">
+            <div class="card">
+                <h2><i class="fas fa-upload"></i> Upload Training Data</h2>
+                <form id="uploadForm">
+                    <input type="file" id="csvFile" accept=".csv" required>
+                    <button type="submit" id="uploadBtn">
+                        <i class="fas fa-cloud-upload-alt"></i> Upload & Train Model
+                    </button>
+                </form>
+                <div id="uploadStatus"></div>
+                <div style="margin-top: 1rem; padding: 1rem; background: #f8f9fa; border-radius: 8px; font-size: 0.9rem;">
+                    <strong>CSV Format Requirements:</strong>
+                    <ul style="margin-top: 0.5rem; padding-left: 1.2rem;">
+                        <li>Required columns: <code>timestamp</code>, <code>fillLevel</code></li>
+                        <li>Timestamp format: YYYY-MM-DD </li>
+                        <li>Fill level should be numeric (0-100)</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="chart-container">
+            <h2><i class="fas fa-calendar-alt"></i> Predictions for Next 14 Days</h2>
+            <canvas id="predictionsChart"></canvas>
+            <div id="predictionsTable"></div>
+        </div>
+    </div>
+
+    <script>
+        let predictionsChart;
+        const API_BASE_URL = 'http://localhost:5000';
+
+        // Fetch dataset information
+        async function fetchDatasetInfo() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/dataset/info`);
+                const data = await response.json();
+                
+                if (response.ok) {
+                    if (data.total_records > 0) {
+                        document.getElementById('datasetInfo').innerHTML = `
+                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+                                <div><strong>Total Records:</strong> ${data.total_records}</div>
+                                <div><strong>Valid Records:</strong> ${data.valid_records || data.total_records}</div>
+                                                                <div><strong>Model Status:</strong> 
+                                    <span style="color: ${data.is_trained ? 'var(--success-color)' : 'var(--warning-color)'};">
+                                        <i class="fas fa-${data.is_trained ? 'check-circle' : 'exclamation-triangle'}"></i>
+                                        ${data.is_trained ? 'Trained' : 'Not Trained'}
+                                    </span>
+                                </div>
+                            </div>
+                        `;
+                    } else {
+                        document.getElementById('datasetInfo').innerHTML = 
+                            '<p style="color: var(--warning-color);"><i class="fas fa-info-circle"></i> No data available. Please upload training data.</p>';
+                    }
+                } else {
+                    throw new Error(data.error || 'Failed to fetch dataset info');
+                }
+            } catch (error) {
+                console.error('Error fetching dataset info:', error);
+                document.getElementById('datasetInfo').innerHTML = 
+                    '<p style="color: var(--error-color);"><i class="fas fa-exclamation-triangle"></i> Error loading dataset info</p>';
+            }
+        }
+
+        // Fetch predictions
+        async function fetchPredictions() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/predict`);
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    updatePredictionsChart(data);
+                    updatePredictionsTable(data);
+                } else {
+                    const errorData = await response.json();
+                    console.log('Predictions not available:', errorData.error);
+                    
+                    // Clear chart and table if no predictions available
+                    if (predictionsChart) {
+                        predictionsChart.destroy();
+                        predictionsChart = null;
+                    }
+                    
+                    document.getElementById('predictionsTable').innerHTML = 
+                        '<p style="color: var(--warning-color); text-align: center; padding: 2rem;"><i class="fas fa-info-circle"></i> No predictions available. Please upload training data first.</p>';
+                }
+            } catch (error) {
+                console.error('Error fetching predictions:', error);
+            }
+        }
+
+        // Update predictions chart
+        function updatePredictionsChart(predictions) {
+            const ctx = document.getElementById('predictionsChart').getContext('2d');
+            if (predictionsChart) predictionsChart.destroy();
+
+            predictionsChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: predictions.map(p => moment(p.date).format('MMM D')),
+                    datasets: [{
+                        label: 'Predicted Fill Level',
+                        data: predictions.map(p => p.predicted_fill_level),
+                        borderColor: 'var(--primary-color)',
+                        backgroundColor: 'rgba(80, 200, 120, 0.1)',
+                        borderWidth: 2,
+                        tension: 0.2,
+                        pointBackgroundColor: 'var(--secondary-color)',
+                        pointBorderColor: '#fff',
+                        pointRadius: 4,
+                        pointHoverRadius: 6,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                            labels: {
+                                boxWidth: 12,
+                                font: {
+                                    family: "'Segoe UI', 'Roboto', 'Arial', sans-serif"
+                                }
+                            }
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                            titleFont: {
+                                family: "'Segoe UI', 'Roboto', 'Arial', sans-serif"
+                            },
+                            bodyFont: {
+                                family: "'Segoe UI', 'Roboto', 'Arial', sans-serif"
+                            },
+                            callbacks: {
+                                label: function(context) {
+                                    return `Fill Level: ${context.raw}%`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 100,
+                            title: {
+                                display: true,
+                                text: 'Fill Level (%)',
+                                font: {
+                                    family: "'Segoe UI', 'Roboto', 'Arial', sans-serif"
+                                }
+                            }
+                        },
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Date',
+                                font: {
+                                    family: "'Segoe UI', 'Roboto', 'Arial', sans-serif"
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Update predictions table
+        function updatePredictionsTable(predictions) {
+            document.getElementById('predictionsTable').innerHTML = `
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Predicted Fill Level</th>
+                            <th>Collection Needed</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${predictions.map(p => `
+                            <tr class="${p.should_collect ? 'collection-needed' : ''}">
+                                <td>${moment(p.date).format('MMM D, YYYY')}</td>
+                                <td>${p.predicted_fill_level}%</td>
+                                <td>
+                                    ${p.should_collect 
+                                        ? '<span style="color: var(--error-color);"><i class="fas fa-check-circle"></i> Yes</span>' 
+                                        : '<span style="color: var(--text-color);"><i class="fas fa-times-circle"></i> No</span>'
+                                    }
+                                </td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            `;
+        }
+
+        // Show status message
+        function showStatus(message, type = 'info') {
+            const statusDiv = document.getElementById('uploadStatus');
+            statusDiv.className = `status-${type}`;
+            statusDiv.innerHTML = message;
+            
+            if (type !== 'loading') {
+                setTimeout(() => {
+                    statusDiv.innerHTML = '';
+                    statusDiv.className = '';
+                }, 5000);
+            }
+        }
+
+        // Handle file upload
+        document.getElementById('uploadForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const fileInput = document.getElementById('csvFile');
+            const uploadBtn = document.getElementById('uploadBtn');
+            const file = fileInput.files[0];
+            
+            if (!file) {
+                showStatus('<i class="fas fa-exclamation-triangle"></i> Please select a CSV file', 'error');
+                return;
+            }
+
+            // Show loading state
+            uploadBtn.disabled = true;
+            uploadBtn.innerHTML = '<div class="spinner"></div> Uploading & Training...';
+            showStatus('<div class="spinner"></div> Uploading file and training model...', 'loading');
+
+            try {
+                const formData = new FormData();
+                formData.append('file', file);
+
+                const response = await fetch(`${API_BASE_URL}/upload`, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    showStatus(`
+                        <i class="fas fa-check-circle"></i> Success! 
+                        ${result.message}<br>
+                        <small>Records processed: ${result.records_processed}</small>
+                    `, 'success');
+                    
+                    // Clear the file input
+                    fileInput.value = '';
+                    
+                    // Refresh data
+                    await fetchDatasetInfo();
+                    await fetchPredictions();
+                } else {
+                    showStatus(`<i class="fas fa-exclamation-triangle"></i> ${result.error}`, 'error');
+                }
+            } catch (error) {
+                console.error('Upload error:', error);
+                showStatus('<i class="fas fa-exclamation-triangle"></i> Upload failed. Please check your connection and try again.', 'error');
+            } finally {
+                // Reset button state
+                uploadBtn.disabled = false;
+                uploadBtn.innerHTML = '<i class="fas fa-cloud-upload-alt"></i> Upload & Train Model';
+            }
+        });
+
+        // Logout function
+        function logout() {
+            location.href = "index.html";
+        }
+
+        // Initialize page
+        async function initializePage() {
+            await fetchDatasetInfo();
+            await fetchPredictions();
+        }
+
+        // Auto-refresh data every 5 minutes
+        initializePage();
+        setInterval(initializePage, 300000);
+    </script>
+</body>
+</html>

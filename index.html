@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login Dashboard</title>
+      <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background: url('background.jpg') no-repeat center center/cover;
+            /* If your image is in a subdirectory like "images", use: */
+            /* background: url('background.jpg') no-repeat center center/cover; */
+        }
+        .login-container {
+            background: rgba(255, 255, 255, 0.9); /* Add a semi-transparent white background */
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            width: 300px;
+            text-align: center;
+        }
+        .login-container h1 {
+            margin-bottom: 20px;
+            font-size: 24px;
+            color: #black;
+        }
+        .login-container input {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .login-container button {
+            width: 100%;
+            padding: 10px;
+            background: #4CAF50;
+            color: #black;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .login-container button:hover {
+            background: #black;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <h1>Login</h1>
+        <input type="email" id="email" placeholder="Enter your email" required />
+        <input type="password" id="password" placeholder="Enter your password" required />
+        <button id="loginButton">Login</button>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+
+    <script>
+        // Firebase configuration
+        const firebaseConfig = {
+  apiKey: "AIzaSyA3cCcxUA10Vvbdn5IpBrumruc9-CW_NGk",
+  authDomain: "smartwaste-9b8d9.firebaseapp.com",
+  databaseURL: "https://smartwaste-9b8d9-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "smartwaste-9b8d9",
+  storageBucket: "smartwaste-9b8d9.firebasestorage.app",
+  messagingSenderId: "416800460395",
+  appId: "1:416800460395:web:8b3e618289982203d16b2e",
+  measurementId: "G-P4RPPD4MZ0"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const database = firebase.database();
+
+        // DOM elements
+        const emailInput = document.getElementById("email");
+        const passwordInput = document.getElementById("password");
+        const loginButton = document.getElementById("loginButton");
+
+        // Login functionality with auto-create
+        loginButton.addEventListener("click", () => {
+            const email = emailInput.value;
+            const password = passwordInput.value;
+
+            if (email && password) {
+                // Attempt to log in
+                auth.signInWithEmailAndPassword(email, password)
+                    .then((userCredential) => {
+                        alert("Login successful!");
+                        console.log("User logged in:", userCredential.user);
+                        
+                        // Redirect to dashboard
+                        window.location.href = "moniter.html";
+                    })
+                    .catch((error) => {
+                        if (error.code === "auth/user-not-found") {
+                            // User not found, create a new user
+                            auth.createUserWithEmailAndPassword(email, password)
+                                .then((userCredential) => {
+                                    alert("Account created successfully! You are now logged in.");
+                                    console.log("New user created:", userCredential.user);
+
+                                    // Store user details in the database
+                                    database.ref('users/' + userCredential.user.uid).set({
+                                        email: email,
+                                        role: "user" // Default role for new users
+                                    });
+
+                                    // Redirect to dashboard
+                                    window.location.href = "montier.html";
+                                })
+                                .catch((error) => {
+                                    alert("Error creating user: " + error.message);
+                                });
+                        } else {
+                            // Handle other login errors
+                            alert("Error: " + error.message);
+                        }
+                    });
+            } else {
+                alert("Please enter both email and password.");
+            }
+        });
+    </script>
+</body>
+</html>
