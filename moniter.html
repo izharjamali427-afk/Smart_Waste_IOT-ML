@@ -355,17 +355,11 @@
   <script>
     // Initialize Firebase and EmailJS
     const firebaseConfig = { 
-      apiKey: "AIzaSyA3cCcxUA10Vvbdn5IpBrumruc9-CW_NGk",
-      authDomain: "smartwaste-9b8d9.firebaseapp.com",
-      databaseURL: "https://smartwaste-9b8d9-default-rtdb.asia-southeast1.firebasedatabase.app",
-      projectId: "smartwaste-9b8d9",
-      storageBucket: "smartwaste-9b8d9.appspot.com",
-      messagingSenderId: "123456789",
-      appId: "1:123456789:web:abcdefgh"
+
     };
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
-    emailjs.init("3_STFSk0dHOomwBm0");
+    emailjs.init("");
 
     let logs = "Timestamp,Bin Name,Fill Level,Latitude,Longitude\n";
     let binMarkers = [];
@@ -523,3 +517,4 @@
   </script>
 </body>
 </html>
+
